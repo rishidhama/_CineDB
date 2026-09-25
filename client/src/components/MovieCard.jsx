@@ -7,7 +7,7 @@ export default function MovieCard({ movie }) {
     <Link to={`/movie/${movieKey(movie)}`} className="card">
       <div className="poster-wrap">
         {movie.poster ? (
-          <img src={movie.poster} alt={movie.title} />
+          <img src={movie.poster} alt={movie.title} loading="lazy" />
         ) : (
           <div className="poster-fallback">{movie.title}</div>
         )}

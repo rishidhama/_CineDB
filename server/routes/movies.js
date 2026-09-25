@@ -90,7 +90,7 @@ router.get("/:id", optionalAuth, async (req, res) => {
     let inWatchlist = false;
     let myRating = 0;
 
-    if (req.userId) {
+    if (req.userId && User.db?.readyState === 1) {
       const user = await User.findById(req.userId);
       if (user) {
         inWatchlist = user.watchlist.some((item) => sameTitle(item, movie));
@@ -99,7 +99,7 @@ router.get("/:id", optionalAuth, async (req, res) => {
           { ...snapshot(movie), viewedAt: new Date() },
           ...user.history.filter((item) => !sameTitle(item, movie)),
         ].slice(0, 40);
-        await user.save();
+        user.save().catch(() => {});
       }
     }
 

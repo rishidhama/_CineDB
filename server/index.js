@@ -29,15 +29,9 @@ app.get("/api/health", (_req, res) => {
 });
 
 async function start() {
-  if (!MONGODB_URI || MONGODB_URI.includes("xxxxx")) {
-    throw new Error("Add your MongoDB Atlas URI to server/.env as MONGODB_URI");
-  }
   if (!process.env.TMDB_API_KEY || process.env.TMDB_API_KEY === "your_tmdb_api_key") {
     throw new Error("Add your TMDB API key to server/.env as TMDB_API_KEY");
   }
-
-  await mongoose.connect(MONGODB_URI);
-  console.log("Connected to MongoDB Atlas");
 
   const server = app.listen(PORT, () => {
     console.log(`API running on http://localhost:${PORT}`);
@@ -49,6 +43,16 @@ async function start() {
     }
     throw err;
   });
+
+  if (!MONGODB_URI || MONGODB_URI.includes("xxxxx")) {
+    console.warn("MONGODB_URI missing — movie lists still work, auth will not.");
+    return;
+  }
+
+  mongoose
+    .connect(MONGODB_URI, { serverSelectionTimeoutMS: 8000 })
+    .then(() => console.log("Connected to MongoDB Atlas"))
+    .catch((err) => console.error("MongoDB connect failed:", err.message));
 }
 
 start().catch((err) => {

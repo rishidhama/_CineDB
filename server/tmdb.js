@@ -28,6 +28,9 @@ function apiKey() {
     return key;
 }
 
+const cache = new Map();
+const CACHE_MS = 10 * 60 * 1000;
+
 async function tmdb(path, params = {}) {
     const url = new URL(`${BASE}${path}`);
     url.searchParams.set("api_key", apiKey());
@@ -35,10 +38,25 @@ async function tmdb(path, params = {}) {
         if (value !== undefined && value !== "") url.searchParams.set(key, value);
     });
 
-    const res = await fetch(url);
-    if (!res.ok)
-        throw new Error("TMDB request failed");
-    return res.json();
+    const cacheKey = url.toString();
+    const hit = cache.get(cacheKey);
+    if (hit && Date.now() - hit.at < CACHE_MS) return hit.data;
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 12000);
+    let res;
+    try {
+        res = await fetch(url, { signal: controller.signal });
+    } catch (err) {
+        if (err.name === "AbortError") throw new Error("TMDB request timed out");
+        throw err;
+    } finally {
+        clearTimeout(timer);
+    }
+    if (!res.ok) throw new Error("TMDB request failed");
+    const data = await res.json();
+    cache.set(cacheKey, { at: Date.now(), data });
+    return data;
 }
 
 function posterUrl(path) {
@@ -192,8 +210,8 @@ export async function fetchTmdbDetails(tmdbId, mediaType = "movie") {
     const path = mediaType === "tv" ? `/tv/${tmdbId}` : `/movie/${tmdbId}`;
     const extra =
         mediaType === "tv"
-            ? "credits,images,content_ratings,keywords"
-            : "credits,images,release_dates,keywords";
+            ? "credits,content_ratings,keywords"
+            : "credits,release_dates,keywords";
     return tmdb(path, { append_to_response: extra });
 }
 
@@ -223,6 +241,9 @@ export function extraDetails(raw) {
         })
         .slice(0, 16)
         .map((img) => `${IMG}/w780${img.file_path}`);
+    if (!photos.length && raw.backdrop_path) {
+        photos.push(`${IMG}/w780${raw.backdrop_path}`);
+    }
 
     let certification = "";
     if (raw.content_ratings?.results?.length) {

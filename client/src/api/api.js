@@ -2,7 +2,10 @@ export function movieKey(movie) {
     return `${movie.mediaType || "movie"}-${movie.tmdbId}`;
 }
 
-const API = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
+const API = (
+    import.meta.env.VITE_API_URL ||
+    (import.meta.env.PROD ? "https://cinedb-5kbh.onrender.com" : "")
+).replace(/\/$/, "");
 const MOVIES = `${API}/api/movies`;
 const AUTH = `${API}/api/auth`;
 const WATCHLIST = `${API}/api/watchlist`;
@@ -18,27 +21,43 @@ async function readError(res, fallback) {
     throw new Error(data.message || fallback);
 }
 
+async function apiFetch(url, options = {}, timeoutMs = 25000) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+        const res = await fetch(url, { ...options, signal: controller.signal });
+        return res;
+    } catch (err) {
+        if (err.name === "AbortError") {
+            throw new Error("The server took too long. Render may be waking up — try again.");
+        }
+        throw err;
+    } finally {
+        clearTimeout(timer);
+    }
+}
+
 export async function getMovies(params = {}) {
     const query = new URLSearchParams(params).toString();
-    const res = await fetch(`${MOVIES}${query ? `?${query}` : ""}`);
+    const res = await apiFetch(`${MOVIES}${query ? `?${query}` : ""}`);
     if (!res.ok) await readError(res, "Could not load movies");
     return res.json();
 }
 
 export async function getFeatured() {
-    const res = await fetch(`${MOVIES}/featured`);
+    const res = await apiFetch(`${MOVIES}/featured`);
     if (!res.ok) await readError(res, "Could not load featured movies");
     return res.json();
 }
 
 export async function getMovie(id) {
-    const res = await fetch(`${MOVIES}/${id}`, { headers: authHeaders() });
+    const res = await apiFetch(`${MOVIES}/${id}`, { headers: authHeaders() });
     if (!res.ok) throw new Error("Movie not found");
     return res.json();
 }
 
 export async function rateMovie(movie, score) {
-    const res = await fetch(`${MOVIES}/${movieKey(movie)}/rate`, {
+    const res = await apiFetch(`${MOVIES}/${movieKey(movie)}/rate`, {
         method: "POST",
         headers: { "Content-Type": "application/json", ...authHeaders() },
         body: JSON.stringify({ score }),
@@ -48,13 +67,13 @@ export async function rateMovie(movie, score) {
 }
 
 export async function getWatchlist() {
-    const res = await fetch(WATCHLIST, { headers: authHeaders() });
+    const res = await apiFetch(WATCHLIST, { headers: authHeaders() });
     if (!res.ok) await readError(res, "Please sign in to view your watchlist");
     return res.json();
 }
 
 export async function toggleWatchlist(movie) {
-    const res = await fetch(WATCHLIST, {
+    const res = await apiFetch(WATCHLIST, {
         method: "POST",
         headers: { "Content-Type": "application/json", ...authHeaders() },
         body: JSON.stringify(movie),
@@ -64,14 +83,13 @@ export async function toggleWatchlist(movie) {
 }
 
 export async function getHistory() {
-    const res = await fetch(HISTORY, { headers: authHeaders() });
+    const res = await apiFetch(HISTORY, { headers: authHeaders() });
     if (!res.ok) await readError(res, "Please sign in to view history");
     return res.json();
 }
 
-
 export async function loginRequest(email, password) {
-    const res = await fetch(`${AUTH}/login`, {
+    const res = await apiFetch(`${AUTH}/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -81,7 +99,7 @@ export async function loginRequest(email, password) {
 }
 
 export async function registerRequest(name, email, password) {
-    const res = await fetch(`${AUTH}/register`, {
+    const res = await apiFetch(`${AUTH}/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, password }),
@@ -93,7 +111,7 @@ export async function registerRequest(name, email, password) {
 export async function getMe() {
     const token = localStorage.getItem("cinedb-token");
     if (!token) throw new Error("No session");
-    const res = await fetch(`${AUTH}/me`, { headers: authHeaders() });
+    const res = await apiFetch(`${AUTH}/me`, { headers: authHeaders() }, 8000);
     if (!res.ok) throw new Error("Please sign in");
     return res.json();
 }

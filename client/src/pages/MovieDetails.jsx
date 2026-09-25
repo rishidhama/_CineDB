@@ -12,15 +12,21 @@ export default function MovieDetails() {
   const [picked, setPicked] = useState(0);
   const [message, setMessage] = useState("");
   const [photo, setPhoto] = useState("");
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    getMovie(id).then((data) => {
-      setMovie(data);
-      setSaved(Boolean(data.inWatchlist));
-      setPicked(data.myRating || 0);
-    });
+    setMovie(null);
+    setError("");
+    getMovie(id)
+      .then((data) => {
+        setMovie(data);
+        setSaved(Boolean(data.inWatchlist));
+        setPicked(data.myRating || 0);
+      })
+      .catch((err) => setError(err.message || "Movie not found"));
   }, [id, user]);
 
+  if (error) return <p className="loading">{error}</p>;
   if (!movie) return <p className="loading">Loading...</p>;
 
   async function onRate(score) {
