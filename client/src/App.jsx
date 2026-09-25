@@ -1,13 +1,13 @@
 import { Routes, Route } from 'react-router-dom';
-import Navbar from './components/Navbar';
-import Footer from './components/Footer';
+import Navbar from './components/Navbar.jsx';
+import Footer from './components/Footer.jsx';
 import Home from './pages/Home.jsx';
-import MovieDetails from './pages/movie.jsx';
+import MovieDetails from './pages/MovieDetails.jsx';
 import Search from './pages/Search.jsx';
 import Watchlist from './pages/Watchlist.jsx';
 import History from './pages/History.jsx';
 import SignIn from './pages/SignIn.jsx';
-import SignUp from './pages/SignUp.jsx';
+import SignUp from './pages/Register.jsx';
 
 export default function App() {
 

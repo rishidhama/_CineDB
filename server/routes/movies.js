@@ -3,6 +3,7 @@ import {
   fromTmdbMovie,
   fetchPopular,
   fetchTopRated,
+  searchTmdb,
   fetchTrending,
   discoverByGenre,
 } from "../tmdb.js";

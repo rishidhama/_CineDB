@@ -32,24 +32,24 @@ async function tmdb(path, params = {}) {
     const url = new URL(`${BASE}${path}`);
     url.searchParams.set("api_key", apiKey());
     Object.entries(params).forEach(([key, value]) => {
-        if(value !== undefined && value !== "") url.searchParams.set(key, value);
+        if (value !== undefined && value !== "") url.searchParams.set(key, value);
     });
 
     const res = await fetch(url);
-    if(!res.ok)
+    if (!res.ok)
         throw new Error("TMDB request failed");
     return res.json();
 }
 
 function posterUrl(path) {
-  return path ? `${IMG}/w500${path}` : "";
+    return path ? `${IMG}/w500${path}` : "";
 }
 function backdropUrl(path) {
-  return path ? `${IMG}/original${path}` : "";
+    return path ? `${IMG}/original${path}` : "";
 }
-  
+
 function profileUrl(path) {
-  return path ? `${IMG}/w185${path}` : "";
+    return path ? `${IMG}/w185${path}` : "";
 }
 
 function mapCast(credits) {
@@ -67,7 +67,7 @@ function minutesToRuntime(mins) {
     const minutes = mins % 60;
     return hours ? `${hours}h ${minutes}m` : `${minutes}m`;
 }
-      
+
 export function fromTmdbMovie(movie) {
     const mediaType = movie.media_type === "tv" ? "tv" : "movie";
     const title = movie.title || movie.name || "";
@@ -100,7 +100,7 @@ export function fromTmdbMovie(movie) {
     };
 }
 
-export async  function fetchPopular() {
+export async function fetchPopular() {
     const data = await tmdb("/movie/popular");
     return data.results || [];
 }
@@ -110,17 +110,154 @@ export async function fetchTopRated() {
     return data.results || [];
 }
 
-  
+
 export async function fetchTrending() {
     const data = await tmdb("/trending/movie/week");
     return data.results || [];
 }
+
+export async function searchTmdb(query) {
+    const [movies, people, shows] = await Promise.all([
+        tmdb("/search/movie", { query }),
+        tmdb("/search/person", { query }),
+        tmdb("/search/tv", { query }),
+    ]);
+
+    const byKey = new Map();
+    const skipTvGenres = new Set([10763, 10767]);
+
+    function add(item, type, fromPerson = false) {
+        const mediaType = type || (item.media_type === "tv" ? "tv" : "movie");
+        if (!item?.id || mediaType === "person") return;
+        const title = item.title || item.name;
+        if (!title) return;
+        if (mediaType === "tv") {
+            if ((item.genre_ids || []).some((id) => skipTvGenres.has(id))) return;
+            const role = (item.character || "").toLowerCase();
+            if (role === "herself" || role === "himself" || role === "self") return;
+        }
+        const key = `${mediaType}-${item.id}`;
+        const current = byKey.get(key);
+        if (!current) {
+            byKey.set(key, { ...item, media_type: mediaType, title, _fromPerson: fromPerson });
+        } else if (fromPerson) {
+            current._fromPerson = true;
+        }
+    }
+
+    (movies.results || []).forEach((item) => add(item, "movie"));
+    (shows.results || []).forEach((item) => add(item, "tv"));
+
+    const q = query.toLowerCase().trim();
+    const words = q.split(/\s+/).filter(Boolean);
+    const person =
+        (people.results || []).find((p) => words.every((word) => p.name.toLowerCase().includes(word))) ||
+        people.results?.[0];
+
+    if (person) {
+        (person.known_for || []).forEach((item) => add(item, item.media_type, true));
+        const credits = await tmdb(`/person/${person.id}/combined_credits`);
+        const crewJobs = new Set(["Director", "Writer", "Screenplay", "Creator", "Novel"]);
+        (credits.cast || []).forEach((item) => add(item, item.media_type, true));
+        (credits.crew || [])
+            .filter((item) => crewJobs.has(item.job))
+            .forEach((item) => add(item, item.media_type, true));
+    }
+
+    return [...byKey.values()].sort((a, b) => {
+        function score(item) {
+            const title = (item.title || "").toLowerCase();
+            let value = item.popularity || 0;
+            if (title === q) value += 1000;
+            else if (title.startsWith(q)) value += 200;
+            else if (title.includes(q)) value += 20;
+            if (item._fromPerson) value += 40;
+            return value;
+        }
+        return score(b) - score(a);
+    });
+}
+
 export async function discoverByGenre(genreName) {
     const genreId = ID_BY_GENRE[genreName];
     if (!genreId) return fetchPopular();
     const data = await tmdb("/discover/movie", {
-      with_genres: String(genreId),
-      sort_by: "popularity.desc",
+        with_genres: String(genreId),
+        sort_by: "popularity.desc",
     });
     return data.results || [];
-  }
+}
+
+export async function fetchTmdbDetails(tmdbId, mediaType = "movie") {
+    const path = mediaType === "tv" ? `/tv/${tmdbId}` : `/movie/${tmdbId}`;
+    const extra =
+        mediaType === "tv"
+            ? "credits,images,content_ratings,keywords"
+            : "credits,images,release_dates,keywords";
+    return tmdb(path, { append_to_response: extra });
+}
+
+const CERT_MEANING = {
+    G: "All ages. Little or no content that parents would find objectionable.",
+    PG: "Parental guidance suggested. Some material may not be suitable for children.",
+    "PG-13": "Parents strongly cautioned. Some material may be inappropriate for children under 13.",
+    R: "Restricted. Under 17 requires an accompanying parent or adult guardian.",
+    "NC-17": "Adults only. No one 17 and under admitted.",
+    NR: "No official rating is listed.",
+    "TV-Y": "Suitable for all children.",
+    "TV-Y7": "Directed to older children (7+).",
+    "TV-G": "Suitable for a general audience.",
+    "TV-PG": "Parental guidance suggested.",
+    "TV-14": "Parents strongly cautioned. May be unsuitable for children under 14.",
+    "TV-MA": "Mature audience only. May be unsuitable for children under 17.",
+};
+
+export function extraDetails(raw) {
+    const images = raw.images || {};
+    const seen = new Set();
+    const photos = [...(images.backdrops || []), ...(images.posters || [])]
+        .filter((img) => {
+            if (!img?.file_path || seen.has(img.file_path)) return false;
+            seen.add(img.file_path);
+            return true;
+        })
+        .slice(0, 16)
+        .map((img) => `${IMG}/w780${img.file_path}`);
+
+    let certification = "";
+    if (raw.content_ratings?.results?.length) {
+        certification =
+            raw.content_ratings.results.find((row) => row.iso_3166_1 === "US")?.rating ||
+            raw.content_ratings.results.find((row) => row.rating)?.rating ||
+            "";
+    } else if (raw.release_dates?.results?.length) {
+        const us = raw.release_dates.results.find((row) => row.iso_3166_1 === "US");
+        const dated = us?.release_dates || raw.release_dates.results.flatMap((row) => row.release_dates || []);
+        certification = dated.find((row) => row.certification)?.certification || "";
+    }
+    certification = (certification || "NR").trim();
+
+    const keywords = (raw.keywords?.keywords || raw.keywords?.results || []).map((item) =>
+        String(item.name || "").toLowerCase()
+    );
+
+    const notes = [];
+    function addNote(label, tests) {
+        if (tests.some((word) => keywords.some((name) => name.includes(word)))) notes.push(label);
+    }
+    addNote("Nudity / sexual content", ["nudity", "sex", "sexual"]);
+    addNote("Violence & gore", ["violence", "gore", "murder", "blood"]);
+    addNote("Profanity", ["profanity", "swearing", "language"]);
+    addNote("Alcohol, drugs & smoking", ["drug", "alcohol", "smoking", "marijuana"]);
+    addNote("Frightening & intense scenes", ["horror", "suicide", "terror", "abuse", "jump scare"]);
+
+    return {
+        photos,
+        cast: mapCast(raw.credits),
+        parentsGuide: {
+            certification,
+            summary: CERT_MEANING[certification] || "Check the listed rating before watching with children.",
+            notes,
+        },
+    };
+}

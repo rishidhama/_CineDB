@@ -1,28 +1,27 @@
 .row {
-    padding: 28px 0 8px;
-  }
-  
-  .row h2 {
-    font-size: 1.35rem;
-    margin-bottom: 14px;
-  }
-  
-  .row-track {
-    display: grid;
-    grid-auto-flow: column;
-    grid-auto-columns: 170px;
-    gap: 16px;
-    overflow-x: auto;
-    padding-bottom: 12px;
-    scrollbar-width: thin;
-  }
-  
-  .row-track::-webkit-scrollbar {
-    height: 8px;
-  }
-  
-  .row-track::-webkit-scrollbar-thumb {
-    background: #333;
-    border-radius: 99px;
-  }
-  
+  padding: 28px 0 8px;
+}
+
+.row h2 {
+  font-size: 1.35rem;
+  margin-bottom: 14px;
+}
+
+.row-track {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 170px;
+  gap: 16px;
+  overflow-x: auto;
+  padding-bottom: 12px;
+  scrollbar-width: thin;
+}
+
+.row-track::-webkit-scrollbar {
+  height: 8px;
+}
+
+.row-track::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 99px;
+}
