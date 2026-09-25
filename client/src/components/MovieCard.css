@@ -1,0 +1,60 @@
+.card {
+    display: block;
+  }
+  
+  .poster-wrap {
+    position: relative;
+    border-radius: 14px;
+    overflow: hidden;
+    aspect-ratio: 2 / 3;
+    background: #222;
+    box-shadow: var(--shadow);
+  }
+  
+  .poster-wrap img,
+  .poster-fallback {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.35s ease;
+  }
+  
+  .poster-fallback {
+    display: grid;
+    place-items: center;
+    text-align: center;
+    padding: 12px;
+    background: linear-gradient(160deg, #2a2410, #111);
+    color: var(--gold);
+    font-weight: 700;
+  }
+  
+  .card:hover img {
+    transform: scale(1.06);
+  }
+  
+  .rating-chip {
+    position: absolute;
+    left: 8px;
+    bottom: 8px;
+    background: rgba(0, 0, 0, 0.78);
+    color: var(--gold);
+    font-weight: 700;
+    font-size: 0.82rem;
+    padding: 4px 8px;
+    border-radius: 999px;
+  }
+  
+  .card h3 {
+    margin-top: 10px;
+    font-size: 0.98rem;
+    font-weight: 650;
+    line-height: 1.25;
+  }
+  
+  .card p {
+    color: var(--muted);
+    font-size: 0.85rem;
+    margin-top: 2px;
+  }
+  
