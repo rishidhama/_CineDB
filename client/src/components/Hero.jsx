@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { movieKey } from "../api.js";
+import { movieKey } from "../api/api.js";
 import "./Hero.css";
 
 export default function Hero({ movie }) {
