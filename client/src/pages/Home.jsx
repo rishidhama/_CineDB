@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { getMovies, getFeatured } from "../api/api.js";
 import Hero from "../components/Hero.jsx";
-// import MovieRow from "../components/MovieRow.jsx";
+import MovieRow from "../components/MovieRow.jsx";
 
 export default function Home() {
   const [featured, setFeatured] = useState([]);
@@ -27,11 +27,11 @@ export default function Home() {
   return (
     <>
       <Hero movie={featured[0] || topRated[0]} />
-      {/* <MovieRow title="Trending this week" movies={featured} />
+      <MovieRow title="Trending this week" movies={featured} />
       <MovieRow title="Top rated" movies={topRated} />
       <MovieRow title="Action" movies={action} />
       <MovieRow title="Drama" movies={drama} />
-      <MovieRow title="Animation" movies={animation} /> */}
+      <MovieRow title="Animation" movies={animation} /> 
     </>
   );
 }
