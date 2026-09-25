@@ -1,5 +1,5 @@
 export function movieKey(movie) {
-    return `${movie.mediaType} || "movie"-${movie.tmdbID}`;
+    return `${movie.mediaType || "movie"}-${movie.tmdbId}`;
 }
 
 const API = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
@@ -30,6 +30,45 @@ export async function getFeatured() {
     if (!res.ok) await readError(res, "Could not load featured movies");
     return res.json();
 }
+
+export async function getMovie(id) {
+    const res = await fetch(`${MOVIES}/${id}`, { headers: authHeaders() });
+    if (!res.ok) throw new Error("Movie not found");
+    return res.json();
+}
+
+export async function rateMovie(movie, score) {
+    const res = await fetch(`${MOVIES}/${movieKey(movie)}/rate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ score }),
+    });
+    if (!res.ok) await readError(res, "Could not save rating");
+    return res.json();
+}
+
+export async function getWatchlist() {
+    const res = await fetch(WATCHLIST, { headers: authHeaders() });
+    if (!res.ok) await readError(res, "Please sign in to view your watchlist");
+    return res.json();
+}
+
+export async function toggleWatchlist(movie) {
+    const res = await fetch(WATCHLIST, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify(movie),
+    });
+    if (!res.ok) await readError(res, "Please sign in to use the watchlist");
+    return res.json();
+}
+
+export async function getHistory() {
+    const res = await fetch(HISTORY, { headers: authHeaders() });
+    if (!res.ok) await readError(res, "Please sign in to view history");
+    return res.json();
+}
+
 
 export async function loginRequest(email, password) {
     const res = await fetch(`${AUTH}/login`, {

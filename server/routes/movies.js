@@ -1,11 +1,15 @@
 import express from "express";
+import User from "../models/User.js";
+import { optionalAuth, requireAuth } from "../Middleware/auth.js";
 import {
   fromTmdbMovie,
   fetchPopular,
   fetchTopRated,
-  searchTmdb,
   fetchTrending,
+  searchTmdb,
   discoverByGenre,
+  fetchTmdbDetails,
+  extraDetails,
 } from "../tmdb.js";
 
 const router = express.Router();
@@ -72,6 +76,68 @@ router.get("/featured", async (_req, res) => {
     } catch (err) {
       res.status(500).json({ message: err.message || "Could not load featured movies" });
     }
+});
+
+router.get("/:id", optionalAuth, async (req, res) => {
+  try {
+    const ref = parseRef(req.params.id);
+    if (!ref) return res.status(400).json({ message: "Invalid movie id" });
+
+    const raw = await fetchTmdbDetails(ref.tmdbId, ref.mediaType);
+    const movie = fromTmdbMovie({ ...raw, media_type: ref.mediaType });
+    if (!movie?.title) return res.status(404).json({ message: "Movie not found" });
+
+    let inWatchlist = false;
+    let myRating = 0;
+
+    if (req.userId) {
+      const user = await User.findById(req.userId);
+      if (user) {
+        inWatchlist = user.watchlist.some((item) => sameTitle(item, movie));
+        myRating = user.ratings.find((item) => sameTitle(item, movie))?.score || 0;
+        user.history = [
+          { ...snapshot(movie), viewedAt: new Date() },
+          ...user.history.filter((item) => !sameTitle(item, movie)),
+        ].slice(0, 40);
+        await user.save();
+      }
+    }
+
+    res.json({ ...movie, ...extraDetails(raw), inWatchlist, myRating });
+  } catch (err) {
+    res.status(400).json({ message: "Could not load movie" });
+  }
+});
+
+router.post("/:id/rate", requireAuth, async (req, res) => {
+  try {
+    const score = Number(req.body.score);
+    if (score < 1 || score > 10) {
+      return res.status(400).json({ message: "Score must be 1 to 10" });
+    }
+
+    const ref = parseRef(req.params.id);
+    if (!ref) return res.status(400).json({ message: "Invalid movie id" });
+
+    const movie = fromTmdbMovie({
+      ...(await fetchTmdbDetails(ref.tmdbId, ref.mediaType)),
+      media_type: ref.mediaType,
+    });
+
+    const user = await User.findById(req.userId);
+    const existing = user.ratings.find((item) => sameTitle(item, movie));
+    if (existing) existing.score = score;
+    else user.ratings.push({ tmdbId: movie.tmdbId, mediaType: movie.mediaType, score });
+    await user.save();
+
+    res.json({
+      ...movie,
+      inWatchlist: user.watchlist.some((item) => sameTitle(item, movie)),
+      myRating: score,
+    });
+  } catch (err) {
+    res.status(400).json({ message: "Could not save rating" });
+  }
 });
 
 export default router;
