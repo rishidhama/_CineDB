@@ -7,7 +7,7 @@ import Search from './pages/Search.jsx';
 import Watchlist from './pages/Watchlist.jsx';
 import History from './pages/History.jsx';
 import SignIn from './pages/SignIn.jsx';
-import SignUp from './pages/Register.jsx';
+import Register from './pages/Register.jsx';
 
 export default function App() {
 
@@ -22,7 +22,7 @@ export default function App() {
           <Route path="/watchlist" element={<Watchlist />} />
           <Route path="/history" element={<History />} />
           <Route path="/signin" element={<SignIn />} />
-          <Route path="/signup" element={<SignUp />} />
+          <Route path="/register" element={<Register />} />
         </Routes>
       </main>
       <Footer />

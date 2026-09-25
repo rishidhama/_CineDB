@@ -4,8 +4,8 @@ import cors from "cors";
 import mongoose from "mongoose";
 import movieRoutes from "./routes/movies.js";
 import authRoutes from "./routes/auth.js";
-import watchlistRoutes from "./routes/watchlist.js";
-import historyRoutes from "./routes/history.js";
+// import watchlistRoutes from "./routes/watchlist.js";
+// import historyRoutes from "./routes/history.js";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -21,8 +21,8 @@ app.use((err, req, res, next) => {
 });
 app.use("/api/movies", movieRoutes);
 app.use("/api/auth", authRoutes);
-app.use("/api/watchlist", watchlistRoutes);
-app.use("/api/history", historyRoutes);
+// app.use("/api/watchlist", watchlistRoutes);
+// app.use("/api/history", historyRoutes);  
 
 app.get("/api/health", (_req, res) => {
   res.json({ ok: true });
