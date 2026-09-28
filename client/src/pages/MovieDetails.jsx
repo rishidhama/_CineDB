@@ -12,11 +12,14 @@ export default function MovieDetails() {
   const [picked, setPicked] = useState(0);
   const [message, setMessage] = useState("");
   const [photo, setPhoto] = useState("");
+  const [showTrailer, setShowTrailer] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
     setMovie(null);
     setError("");
+    setShowTrailer(false);
+    setPhoto("");
     getMovie(id)
       .then((data) => {
         setMovie(data);
@@ -25,6 +28,15 @@ export default function MovieDetails() {
       })
       .catch((err) => setError(err.message || "Movie not found"));
   }, [id, user]);
+
+  useEffect(() => {
+    if (!showTrailer) return undefined;
+    function onKey(event) {
+      if (event.key === "Escape") setShowTrailer(false);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showTrailer]);
 
   if (error) return <p className="loading">{error}</p>;
   if (!movie) return <p className="loading">Loading...</p>;
@@ -83,6 +95,11 @@ export default function MovieDetails() {
           )}
 
           <div className="actions">
+            {movie.trailer && (
+              <button className="btn btn-gold" type="button" onClick={() => setShowTrailer(true)}>
+                ▶ Watch trailer
+              </button>
+            )}
             <button className={`btn ${saved ? "btn-gold" : "btn-ghost"}`} onClick={onWatchlist}>
               {saved ? "In watchlist" : "+ Watchlist"}
             </button>
@@ -112,6 +129,20 @@ export default function MovieDetails() {
       </div>
 
       <div className="container details-extra">
+        {movie.trailer && (
+          <section className="detail-block">
+            <h2>Trailer</h2>
+            <div className="trailer-frame">
+              <iframe
+                src={`https://www.youtube-nocookie.com/embed/${movie.trailer}`}
+                title={`${movie.title} trailer`}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+              />
+            </div>
+          </section>
+        )}
+
         {movie.cast?.length > 0 && (
           <section className="detail-block">
             <h2>Cast</h2>
@@ -187,6 +218,23 @@ export default function MovieDetails() {
         <button type="button" className="lightbox" onClick={() => setPhoto("")}>
           <img src={photo} alt="Full size still" />
         </button>
+      )}
+
+      {showTrailer && movie.trailer && (
+        <div
+          className="lightbox trailer-lightbox"
+          onClick={() => setShowTrailer(false)}
+          role="presentation"
+        >
+          <div className="trailer-modal" onClick={(event) => event.stopPropagation()}>
+            <iframe
+              src={`https://www.youtube-nocookie.com/embed/${movie.trailer}?autoplay=1`}
+              title={`${movie.title} trailer`}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+            />
+          </div>
+        </div>
       )}
     </div>
   );

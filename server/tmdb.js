@@ -210,9 +210,26 @@ export async function fetchTmdbDetails(tmdbId, mediaType = "movie") {
     const path = mediaType === "tv" ? `/tv/${tmdbId}` : `/movie/${tmdbId}`;
     const extra =
         mediaType === "tv"
-            ? "credits,content_ratings,keywords"
-            : "credits,release_dates,keywords";
+            ? "credits,content_ratings,keywords,videos,images"
+            : "credits,release_dates,keywords,videos,images";
     return tmdb(path, { append_to_response: extra });
+}
+
+function pickTrailerKey(videos) {
+    const list = (videos?.results || []).filter((clip) => clip.site === "YouTube" && clip.key);
+    if (!list.length) return "";
+
+    function rank(clip) {
+        let score = 0;
+        if (clip.type === "Trailer") score += 100;
+        else if (clip.type === "Teaser") score += 50;
+        else if (clip.type === "Clip") score += 10;
+        if (clip.official) score += 20;
+        if (clip.iso_639_1 === "en") score += 10;
+        return score;
+    }
+
+    return [...list].sort((a, b) => rank(b) - rank(a))[0].key;
 }
 
 const CERT_MEANING = {
@@ -274,6 +291,7 @@ export function extraDetails(raw) {
 
     return {
         photos,
+        trailer: pickTrailerKey(raw.videos),
         cast: mapCast(raw.credits),
         parentsGuide: {
             certification,

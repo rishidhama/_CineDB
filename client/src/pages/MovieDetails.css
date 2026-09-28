@@ -298,4 +298,33 @@
     max-height: 90vh;
     border-radius: 12px;
   }
+
+  .trailer-frame,
+  .trailer-modal {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: 16px;
+    overflow: hidden;
+    background: #000;
+    box-shadow: var(--shadow);
+  }
+
+  .trailer-frame iframe,
+  .trailer-modal iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
+
+  .trailer-lightbox {
+    cursor: zoom-out;
+  }
+
+  .trailer-modal {
+    max-width: min(1100px, 100%);
+    width: 100%;
+  }
   
