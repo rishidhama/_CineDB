@@ -11,7 +11,10 @@ export default function Navbar() {
   function onSearch(e) {
     e.preventDefault();
     const term = q.trim();
-    if (!term) return;
+    if (!term) {
+      navigate("/search");
+      return;
+    }
     navigate(`/search?q=${encodeURIComponent(term)}`);
   }
 
@@ -33,7 +36,9 @@ export default function Navbar() {
         </form>
 
         <nav className="links">
+          <Link to="/search">Browse</Link>
           <Link to="/watchlist">Watchlist</Link>
+          {user && <Link to="/ratings">Ratings</Link>}
           {user && <Link to="/history">History</Link>}
           {user ? (
             <>

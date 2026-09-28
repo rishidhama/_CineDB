@@ -187,6 +187,20 @@
     margin-top: 10px;
     color: #86efac;
   }
+
+  .rate small.is-error {
+    color: #fca5a5;
+  }
+
+  .my-score {
+    color: var(--gold);
+    font-weight: 600;
+    margin-bottom: 16px;
+  }
+
+  .ratings-link {
+    margin-top: 10px;
+  }
   
   @media (max-width: 640px) {
     .details-body {

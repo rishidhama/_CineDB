@@ -6,6 +6,8 @@ import {
   fetchPopular,
   fetchTopRated,
   fetchTrending,
+  fetchPopularTv,
+  fetchTrendingTv,
   searchTmdb,
   discoverByGenre,
   fetchTmdbDetails,
@@ -64,6 +66,18 @@ router.get("/", async (req, res) => {
       return res.json(mapList(await fetchTopRated(), "movie"));
     }
 
+    if (list === "trending") {
+      return res.json(mapList(await fetchTrending(), "movie"));
+    }
+
+    if (list === "tv" || list === "tv_popular") {
+      return res.json(mapList(await fetchPopularTv(), "tv"));
+    }
+
+    if (list === "tv_trending") {
+      return res.json(mapList(await fetchTrendingTv(), "tv"));
+    }
+
     res.json(mapList(await fetchPopular(), "movie"));
   } catch (err) {
     res.status(500).json({ message: err.message || "Could not load movies" });
@@ -76,6 +90,39 @@ router.get("/featured", async (_req, res) => {
     } catch (err) {
       res.status(500).json({ message: err.message || "Could not load featured movies" });
     }
+});
+
+router.get("/ratings", requireAuth, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const items = await Promise.all(
+      [...(user.ratings || [])].reverse().map(async (entry) => {
+        const base = {
+          tmdbId: entry.tmdbId,
+          mediaType: entry.mediaType || "movie",
+          title: entry.title || "",
+          poster: entry.poster || "",
+          rating: entry.rating || 0,
+          year: entry.year || 0,
+          genres: entry.genres || [],
+          myRating: entry.score,
+        };
+        if (base.title || !base.tmdbId) return base;
+        try {
+          const raw = await fetchTmdbDetails(base.tmdbId, base.mediaType);
+          return { ...fromTmdbMovie({ ...raw, media_type: base.mediaType }), myRating: entry.score };
+        } catch {
+          return base;
+        }
+      })
+    );
+
+    res.json(items.filter((movie) => movie.tmdbId));
+  } catch (err) {
+    res.status(400).json({ message: "Could not load ratings" });
+  }
 });
 
 router.get("/:id", optionalAuth, async (req, res) => {
@@ -125,9 +172,10 @@ router.post("/:id/rate", requireAuth, async (req, res) => {
     });
 
     const user = await User.findById(req.userId);
+    const snap = { ...snapshot(movie), score };
     const existing = user.ratings.find((item) => sameTitle(item, movie));
-    if (existing) existing.score = score;
-    else user.ratings.push({ tmdbId: movie.tmdbId, mediaType: movie.mediaType, score });
+    if (existing) Object.assign(existing, snap);
+    else user.ratings.push(snap);
     await user.save();
 
     res.json({

@@ -134,6 +134,16 @@ export async function fetchTrending() {
     return data.results || [];
 }
 
+export async function fetchPopularTv() {
+    const data = await tmdb("/tv/popular");
+    return data.results || [];
+}
+
+export async function fetchTrendingTv() {
+    const data = await tmdb("/trending/tv/week");
+    return data.results || [];
+}
+
 export async function searchTmdb(query) {
     const [movies, people, shows] = await Promise.all([
         tmdb("/search/movie", { query }),

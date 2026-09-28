@@ -66,6 +66,12 @@ export async function rateMovie(movie, score) {
     return res.json();
 }
 
+export async function getRatings() {
+    const res = await apiFetch(`${MOVIES}/ratings`, { headers: authHeaders() });
+    if (!res.ok) await readError(res, "Please sign in to view your ratings");
+    return res.json();
+}
+
 export async function getWatchlist() {
     const res = await apiFetch(WATCHLIST, { headers: authHeaders() });
     if (!res.ok) await readError(res, "Please sign in to view your watchlist");

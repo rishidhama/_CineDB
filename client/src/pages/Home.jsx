@@ -6,6 +6,8 @@ import MovieRow from "../components/MovieRow.jsx";
 export default function Home() {
   const [featured, setFeatured] = useState([]);
   const [topRated, setTopRated] = useState([]);
+  const [tvTrending, setTvTrending] = useState([]);
+  const [tvPopular, setTvPopular] = useState([]);
   const [action, setAction] = useState([]);
   const [drama, setDrama] = useState([]);
   const [animation, setAnimation] = useState([]);
@@ -34,6 +36,12 @@ export default function Home() {
         })
         .catch(() => {});
 
+      getMovies({ list: "tv_trending" })
+        .then((data) => !cancelled && setTvTrending(data))
+        .catch(() => {});
+      getMovies({ list: "tv_popular" })
+        .then((data) => !cancelled && setTvPopular(data))
+        .catch(() => {});
       getMovies({ genre: "Action" }).then((data) => !cancelled && setAction(data)).catch(() => {});
       getMovies({ genre: "Drama" }).then((data) => !cancelled && setDrama(data)).catch(() => {});
       getMovies({ genre: "Animation" }).then((data) => !cancelled && setAnimation(data)).catch(() => {});
@@ -45,7 +53,7 @@ export default function Home() {
     };
   }, []);
 
-  if (error && !featured.length && !topRated.length) {
+  if (error && !featured.length && !topRated.length && !tvPopular.length) {
     return <p className="loading">{error}</p>;
   }
   if (!started && !featured.length && !topRated.length) {
@@ -54,8 +62,10 @@ export default function Home() {
 
   return (
     <>
-      <Hero movie={featured[0] || topRated[0]} />
+      <Hero movie={featured[0] || topRated[0] || tvTrending[0]} />
       <MovieRow title="Trending this week" movies={featured} />
+      <MovieRow title="Trending TV" movies={tvTrending} />
+      <MovieRow title="Popular TV" movies={tvPopular} />
       <MovieRow title="Top rated" movies={topRated} />
       <MovieRow title="Action" movies={action} />
       <MovieRow title="Drama" movies={drama} />

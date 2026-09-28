@@ -1,8 +1,10 @@
 import { Link } from "react-router-dom";
+import { useAuth } from "../AuthContext.jsx";
 import "./Footer.css";
 
 export default function Footer() {
   const year = new Date().getFullYear();
+  const { user } = useAuth();
 
   return (
     <footer className="footer">
@@ -17,8 +19,16 @@ export default function Footer() {
 
         <nav className="footer-links" aria-label="Footer">
           <Link to="/">Home</Link>
+          <Link to="/search">Browse</Link>
           <Link to="/watchlist">Watchlist</Link>
-          <Link to="/signin">Sign in</Link>
+          {user ? (
+            <>
+              <Link to="/ratings">Ratings</Link>
+              <Link to="/history">History</Link>
+            </>
+          ) : (
+            <Link to="/signin">Sign in</Link>
+          )}
         </nav>
 
         <p className="footer-note">

@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../AuthContext.jsx";
-import { getWatchlist, movieKey } from "../api/api.js";
+import { getRatings, movieKey } from "../api/api.js";
 import MovieCard from "../components/MovieCard.jsx";
 
-export default function Watchlist() {
+export default function Ratings() {
   const { user, ready } = useAuth();
   const [movies, setMovies] = useState([]);
   const [error, setError] = useState("");
@@ -18,11 +18,11 @@ export default function Watchlist() {
     }
     setLoading(true);
     setError("");
-    getWatchlist()
+    getRatings()
       .then(setMovies)
       .catch((err) => {
         setMovies([]);
-        setError(err.message || "Could not load watchlist");
+        setError(err.message || "Could not load ratings");
       })
       .finally(() => setLoading(false));
   }, [user]);
@@ -32,9 +32,9 @@ export default function Watchlist() {
   if (!user) {
     return (
       <div className="page container">
-        <h1 className="page-title">Watchlist</h1>
+        <h1 className="page-title">My ratings</h1>
         <div className="empty">
-          <p>Please sign in to save titles.</p>
+          <p>Please sign in to rate titles and see them here.</p>
           <p style={{ marginTop: 16 }}>
             <Link className="btn btn-gold" to="/signin">
               Sign in
@@ -47,20 +47,20 @@ export default function Watchlist() {
 
   return (
     <div className="page container">
-      <h1 className="page-title">Watchlist</h1>
-      <p className="page-sub">Titles you saved to watch later.</p>
-      {loading && <p className="loading">Loading watchlist...</p>}
+      <h1 className="page-title">My ratings</h1>
+      <p className="page-sub">Your scores next to TMDB’s average for each title.</p>
+      {loading && <p className="loading">Loading ratings...</p>}
       {error && <div className="empty">{error}</div>}
       {!loading && !error && movies.length ? (
         <div className="grid">
           {movies.map((movie) => (
-            <MovieCard key={movieKey(movie)} movie={movie} />
+            <MovieCard key={movieKey(movie)} movie={movie} myScore={movie.myRating} />
           ))}
         </div>
       ) : null}
       {!loading && !error && !movies.length && (
         <div className="empty">
-          <p>Your watchlist is empty.</p>
+          <p>You have not rated anything yet.</p>
         </div>
       )}
     </div>

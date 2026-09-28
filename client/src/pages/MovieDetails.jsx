@@ -11,6 +11,7 @@ export default function MovieDetails() {
   const [saved, setSaved] = useState(false);
   const [picked, setPicked] = useState(0);
   const [message, setMessage] = useState("");
+  const [messageKind, setMessageKind] = useState("");
   const [photo, setPhoto] = useState("");
   const [showTrailer, setShowTrailer] = useState(false);
   const [error, setError] = useState("");
@@ -20,6 +21,8 @@ export default function MovieDetails() {
     setError("");
     setShowTrailer(false);
     setPhoto("");
+    setMessage("");
+    setMessageKind("");
     getMovie(id)
       .then((data) => {
         setMovie(data);
@@ -43,22 +46,39 @@ export default function MovieDetails() {
 
   async function onRate(score) {
     if (!user) {
+      setMessageKind("error");
       setMessage("Sign in to rate this movie.");
       return;
     }
+    const previous = picked;
     setPicked(score);
-    await rateMovie(movie, score);
-    setMovie((prev) => ({ ...prev, myRating: score }));
-    setMessage("Thanks for rating!");
+    try {
+      await rateMovie(movie, score);
+      setMovie((prev) => ({ ...prev, myRating: score }));
+      setMessageKind("");
+      setMessage("Saved to My ratings.");
+    } catch (err) {
+      setPicked(previous);
+      setMessageKind("error");
+      setMessage(err.message || "Could not save rating.");
+    }
   }
 
   async function onWatchlist() {
     if (!user) {
+      setMessageKind("error");
       setMessage("Sign in to save a watchlist.");
       return;
     }
-    const result = await toggleWatchlist(movie);
-    setSaved(result.saved);
+    try {
+      const result = await toggleWatchlist(movie);
+      setSaved(result.saved);
+      setMessageKind("");
+      setMessage(result.saved ? "Added to watchlist." : "Removed from watchlist.");
+    } catch (err) {
+      setMessageKind("error");
+      setMessage(err.message || "Could not update watchlist.");
+    }
   }
 
   return (
@@ -82,8 +102,11 @@ export default function MovieDetails() {
           </p>
           <div className="score-box">
             <strong>★ {Number(movie.rating).toFixed(1)}</strong>
-            <span>/ 10 · {Number(movie.votes || 0).toLocaleString()} votes</span>
+            <span>/ 10 TMDB · {Number(movie.votes || 0).toLocaleString()} votes</span>
           </div>
+          {picked > 0 && (
+            <p className="my-score">Your rating · {picked} / 10</p>
+          )}
           <p className="story">{movie.plot}</p>
           {movie.director && (
             <p>
@@ -123,7 +146,14 @@ export default function MovieDetails() {
                 </button>
               ))}
             </div>
-            {message && <small>{message}</small>}
+            {message && <small className={messageKind === "error" ? "is-error" : ""}>{message}</small>}
+            {user && (
+              <p className="ratings-link">
+                <Link className="person-link" to="/ratings">
+                  View my ratings
+                </Link>
+              </p>
+            )}
           </div>
         </div>
       </div>

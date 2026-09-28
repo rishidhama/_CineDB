@@ -2,7 +2,9 @@ import { Link } from "react-router-dom";
 import { movieKey } from "../api/api.js";
 import "./MovieCard.css";
 
-export default function MovieCard({ movie }) {
+export default function MovieCard({ movie, myScore }) {
+  const you = Number(myScore ?? movie.myRating) || 0;
+
   return (
     <Link to={`/movie/${movieKey(movie)}`} className="card">
       <div className="poster-wrap">
@@ -12,6 +14,7 @@ export default function MovieCard({ movie }) {
           <div className="poster-fallback">{movie.title}</div>
         )}
         <div className="rating-chip">★ {Number(movie.rating).toFixed(1)}</div>
+        {you > 0 && <div className="my-score-chip">You {you}</div>}
       </div>
       <h3>{movie.title}</h3>
       <p>

@@ -18,6 +18,11 @@ const ratingSchema = new mongoose.Schema(
     tmdbId: Number,
     mediaType: { type: String, default: "movie" },
     score: Number,
+    title: String,
+    poster: String,
+    rating: Number,
+    year: Number,
+    genres: [String],
   },
   { _id: false }
 );

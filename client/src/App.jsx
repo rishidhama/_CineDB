@@ -6,6 +6,7 @@ import MovieDetails from './pages/MovieDetails.jsx';
 import Search from './pages/Search.jsx';
 import Watchlist from './pages/Watchlist.jsx';
 import History from './pages/History.jsx';
+import Ratings from './pages/Ratings.jsx';
 import SignIn from './pages/SignIn.jsx';
 import Register from './pages/Register.jsx';
 
@@ -20,6 +21,7 @@ export default function App() {
           <Route path="/movie/:id" element={<MovieDetails />} />
           <Route path="/search" element={<Search />} />
           <Route path="/watchlist" element={<Watchlist />} />
+          <Route path="/ratings" element={<Ratings />} />
           <Route path="/history" element={<History />} />
           <Route path="/signin" element={<SignIn />} />
           <Route path="/register" element={<Register />} />
