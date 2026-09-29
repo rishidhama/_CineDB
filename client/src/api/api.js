@@ -88,9 +88,27 @@ export async function toggleWatchlist(movie) {
     return res.json();
 }
 
+export async function removeFromWatchlist(movie) {
+    const res = await apiFetch(`${WATCHLIST}/${movieKey(movie)}`, {
+        method: "DELETE",
+        headers: authHeaders(),
+    });
+    if (!res.ok) await readError(res, "Could not remove from watchlist");
+    return res.json();
+}
+
 export async function getHistory() {
     const res = await apiFetch(HISTORY, { headers: authHeaders() });
     if (!res.ok) await readError(res, "Please sign in to view history");
+    return res.json();
+}
+
+export async function removeFromHistory(movie) {
+    const res = await apiFetch(`${HISTORY}/${movieKey(movie)}`, {
+        method: "DELETE",
+        headers: authHeaders(),
+    });
+    if (!res.ok) await readError(res, "Could not remove from history");
     return res.json();
 }
 

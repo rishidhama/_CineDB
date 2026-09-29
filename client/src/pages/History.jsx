@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../AuthContext";
-import { getHistory, movieKey } from "../api/api.js";
+import { getHistory, movieKey, removeFromHistory } from "../api/api.js";
 import MovieCard from "../components/MovieCard";
 
 export default function History() {
@@ -26,6 +26,18 @@ export default function History() {
       })
       .finally(() => setLoading(false));
   }, [user]);
+
+  async function onRemove(movie) {
+    const key = movieKey(movie);
+    const previous = movies;
+    setMovies((list) => list.filter((item) => movieKey(item) !== key));
+    try {
+      await removeFromHistory(movie);
+    } catch (err) {
+      setMovies(previous);
+      setError(err.message || "Could not remove from history");
+    }
+  }
 
   if (!ready) return <p className="loading">Loading...</p>;
 
@@ -54,7 +66,16 @@ export default function History() {
       {!loading && !error && movies.length ? (
         <div className="grid">
           {movies.map((movie) => (
-            <MovieCard key={movieKey(movie)} movie={movie} />
+            <div className="list-card" key={movieKey(movie)}>
+              <MovieCard movie={movie} />
+              <button
+                type="button"
+                className="list-card-remove"
+                onClick={() => onRemove(movie)}
+              >
+                Remove
+              </button>
+            </div>
           ))}
         </div>
       ) : null}

@@ -54,6 +54,12 @@ router.post("/", requireAuth, async (req, res) => {
   }
 });
 
+function parseRef(id) {
+  const match = /^(movie|tv)-(\d+)$/.exec(id);
+  if (!match) return null;
+  return { mediaType: match[1], tmdbId: Number(match[2]) };
+}
+
 router.delete("/", requireAuth, async (req, res) => {
   try {
     const user = await User.findById(req.userId);
@@ -63,6 +69,22 @@ router.delete("/", requireAuth, async (req, res) => {
     res.json({ saved: false, watchlist: [] });
   } catch (err) {
     res.status(500).json({ message: err.message || "Could not clear watchlist" });
+  }
+});
+
+router.delete("/:id", requireAuth, async (req, res) => {
+  try {
+    const ref = parseRef(req.params.id);
+    if (!ref) return res.status(400).json({ message: "Invalid movie id" });
+
+    const user = await User.findById(req.userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    user.watchlist = (user.watchlist || []).filter((item) => !sameTitle(item, ref));
+    await user.save();
+    res.json({ saved: false, watchlist: user.watchlist });
+  } catch (err) {
+    res.status(500).json({ message: err.message || "Could not remove from watchlist" });
   }
 });
 

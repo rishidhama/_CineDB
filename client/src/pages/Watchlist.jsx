@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../AuthContext.jsx";
-import { getWatchlist, movieKey } from "../api/api.js";
+import { getWatchlist, movieKey, removeFromWatchlist } from "../api/api.js";
 import MovieCard from "../components/MovieCard.jsx";
 
 export default function Watchlist() {
@@ -26,6 +26,18 @@ export default function Watchlist() {
       })
       .finally(() => setLoading(false));
   }, [user]);
+
+  async function onRemove(movie) {
+    const key = movieKey(movie);
+    const previous = movies;
+    setMovies((list) => list.filter((item) => movieKey(item) !== key));
+    try {
+      await removeFromWatchlist(movie);
+    } catch (err) {
+      setMovies(previous);
+      setError(err.message || "Could not remove from watchlist");
+    }
+  }
 
   if (!ready) return <p className="loading">Loading...</p>;
 
@@ -54,7 +66,16 @@ export default function Watchlist() {
       {!loading && !error && movies.length ? (
         <div className="grid">
           {movies.map((movie) => (
-            <MovieCard key={movieKey(movie)} movie={movie} />
+            <div className="list-card" key={movieKey(movie)}>
+              <MovieCard movie={movie} />
+              <button
+                type="button"
+                className="list-card-remove"
+                onClick={() => onRemove(movie)}
+              >
+                Remove
+              </button>
+            </div>
           ))}
         </div>
       ) : null}
