@@ -88,6 +88,43 @@ textarea {
   gap: 20px;
 }
 
+.page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.page-head .page-title {
+  margin-bottom: 0;
+}
+
+.list-card {
+  position: relative;
+}
+
+.list-card-remove {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  border: 0;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.78);
+  color: #f4f4f5;
+}
+
+.list-card-remove:hover {
+  background: #fecaca;
+  color: #111;
+}
+
 .btn {
   display: inline-flex;
   align-items: center;

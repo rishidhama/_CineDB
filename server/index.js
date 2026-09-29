@@ -1,4 +1,5 @@
 import "dotenv/config";
+import dns from "node:dns";
 import express from "express";
 import cors from "cors";
 import mongoose from "mongoose";
@@ -6,6 +7,8 @@ import movieRoutes from "./routes/movies.js";
 import authRoutes from "./routes/auth.js";
 import historyRoutes from "./routes/history.js";
 import watchlistRoutes from "./routes/watchlist.js";
+
+dns.setDefaultResultOrder("ipv4first");
 
 const app = express();
 const PORT = process.env.PORT || 5000;

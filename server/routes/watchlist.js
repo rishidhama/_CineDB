@@ -24,26 +24,46 @@ function snapshot(movie) {
 }
 
 router.get("/", requireAuth, async (req, res) => {
-  const user = await User.findById(req.userId);
-  if (!user) return res.status(404).json({ message: "User not found" });
-  res.json(user.watchlist || []);
+  try {
+    const user = await User.findById(req.userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.json(user.watchlist || []);
+  } catch (err) {
+    res.status(500).json({ message: err.message || "Could not load watchlist" });
+  }
 });
 
 router.post("/", requireAuth, async (req, res) => {
-  const user = await User.findById(req.userId);
-  if (!user) return res.status(404).json({ message: "User not found" });
+  try {
+    const user = await User.findById(req.userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
 
-  const movie = snapshot(req.body);
-  if (!movie.tmdbId) return res.status(400).json({ message: "Invalid movie" });
+    const movie = snapshot(req.body);
+    if (!movie.tmdbId) return res.status(400).json({ message: "Invalid movie" });
 
-  const exists = user.watchlist.some((item) => sameTitle(item, movie));
-  if (exists) {
-    user.watchlist = user.watchlist.filter((item) => !sameTitle(item, movie));
-  } else {
-    user.watchlist.unshift(movie);
+    const exists = user.watchlist.some((item) => sameTitle(item, movie));
+    if (exists) {
+      user.watchlist = user.watchlist.filter((item) => !sameTitle(item, movie));
+    } else {
+      user.watchlist.unshift(movie);
+    }
+    await user.save();
+    res.json({ saved: !exists, watchlist: user.watchlist });
+  } catch (err) {
+    res.status(500).json({ message: err.message || "Could not update watchlist" });
   }
-  await user.save();
-  res.json({ saved: !exists, watchlist: user.watchlist });
+});
+
+router.delete("/", requireAuth, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    user.watchlist = [];
+    await user.save();
+    res.json({ saved: false, watchlist: [] });
+  } catch (err) {
+    res.status(500).json({ message: err.message || "Could not clear watchlist" });
+  }
 });
 
 export default router;
